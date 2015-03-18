@@ -3,6 +3,9 @@
 
 import sys
 import os
+import numpy as na
+import scipy as sp
+import matplotlib.pyplot as plt
 import states2transition as st
 import directory_names as dn
 import dipole_moment as dp
@@ -10,9 +13,6 @@ import energy_extract as en
 import transition_probab_v1 as tpn
 import elastic_strain as stn
 import energy_extract_st as xt
-import numpy as na
-import scipy as sp
-import matplotlib.pyplot as plt
 import avs2vtkr_conv as may
 import directory_names_nn3 as dn3
 import energy_extract_nn3 as en3
@@ -27,7 +27,7 @@ if __name__ == '__main__':
     PREFIX = dn.path
     SUFFIX = '\\output\\'
     #NEEDED TO DISTINGUISH BETWEEN CALCULATIONS
-    tag = PREFIX.split('//')[-1].split('_')[-1][:-1]+'_'
+    TAG = PREFIX.split('//')[-1].split('_')[-1][:-1] + '_'
     xval = []
     yval = []
     yval2 = []
@@ -41,7 +41,7 @@ if __name__ == '__main__':
             st_h = int(st.states[0][0])
             st_e = int(st.states[0][1])
 
-        dp_name = PREFIX+tag+'dipole_moment_'+ str(st_h) + '_' + str(st_e) + '.txt'
+        dp_name = PREFIX+TAG+'dipole_moment_'+ str(st_h) + '_' + str(st_e) + '.txt'
         f_moment = open(dp_name,'w')
         f_moment.write('#Dipole moment between states %i %i\n'%(st_h, st_e))
         f_moment.write('#x y z\n')
@@ -62,7 +62,7 @@ if __name__ == '__main__':
             st_e = int(st.statesNN3[0])
             st_h = int(st.statesNN3[1])
 
-            dp_name = PREFIX+tag+'dipole_moment_'+ str(st_e) + '_' + str(st_h) + '.txt'
+            dp_name = PREFIX+TAG+'dipole_moment_'+ str(st_e) + '_' + str(st_h) + '.txt'
             print dp_name
             f_moment = open(dp_name,'w')
             f_moment.write('#Dipole moment between states %i %i\n'%(st_h, st_e))
@@ -82,7 +82,7 @@ if __name__ == '__main__':
         if sys.argv[1] == '-ex':
             print 'extracting single particle energy'
             en_pos = int(sys.argv[2])
-            e_name = PREFIX+tag+dn.dir_n[0].split('_')[-2]+'_single_particle_energy_stateNO_'+str(en_pos)+'.txt'
+            e_name = PREFIX+TAG+dn.dir_n[0].split('_')[-2]+'_single_particle_energy_stateNO_'+str(en_pos)+'.txt'
             f_energy = open(e_name,'w')
             f_energy.write('#Single particle energy of state '+str(en_pos)+'\n')
             f_energy.write('#var E(meV)\n')
@@ -99,7 +99,7 @@ if __name__ == '__main__':
         if len(sys.argv) > 1:
             if sys.argv[1] == '-e':
                 print 'calculating transition energy'
-                e_name = PREFIX+tag+dn.dir_n[0].split('_')[-2]+'_single_particle_energy_'+st.states[0][0]+'_to_'+st.states[0][1]+'.txt'
+                e_name = PREFIX+TAG+dn.dir_n[0].split('_')[-2]+'_single_particle_energy_'+st.states[0][0]+'_to_'+st.states[0][1]+'.txt'
                 f_energy = open(e_name,'w')
                 f_energy.write('#Transition energy between single particle states '+st.states[0][0]+' and '+st.states[0][1]+'\n')
                 f_energy.write('#var E(meV)\n')
@@ -120,7 +120,7 @@ if __name__ == '__main__':
         if len(sys.argv) > 1:
                 if sys.argv[1] == '-e3':
                     print 'calculating transition energy for nn3'
-                    e_name = PREFIX+tag+'_single_particle_energy.txt'
+                    e_name = PREFIX+TAG+'_single_particle_energy.txt'
                     f_energy = open(e_name,'w')
                     f_energy.write('#Lowest transition energy between single particle states \n')
                     f_energy.write('#var E(meV)\n')
@@ -143,7 +143,7 @@ if __name__ == '__main__':
                     states.append( int(iter) )
                 in_name = 'wf_components_dot_kp8.dat'
                 type = dn.dir_n[0].split('_')[-2]
-                out = open(PREFIX+tag+'wf_components_'+type+'_st'+str(sys.argv[2])+'.txt','w')
+                out = open(PREFIX+TAG+'wf_components_'+type+'_st'+str(sys.argv[2])+'.txt','w')
                 out.write('#var cb hh lh so cb+ cb- hh+ hh- lh+ lh- so+ so-\n')
                 for file in dn.dir_n:
                     infile = PREFIX+file+SUFFIX+in_name
@@ -162,7 +162,7 @@ if __name__ == '__main__':
             print sys.argv, '\n'
             if sys.argv[1] == '-st':
                 direct = sys.argv[2]
-                depname = PREFIX+tag+'BiaxStrain_'+str(dn.dir_n[0].split('_')[-2])+'_'+direct+'Dep.txt'
+                depname = PREFIX+TAG+'BiaxStrain_'+str(dn.dir_n[0].split('_')[-2])+'_'+direct+'Dep.txt'
                 f_dep = open(depname,'w')
                 f_dep.write('#Var minPosBiax minValBiax\n')
                 for directory in dn.dir_n:
@@ -212,7 +212,7 @@ if __name__ == '__main__':
                     angles = na.linspace( start , end , num=step )
                     out = []
                     tempName = 'PolDepTME_'+str(st.states[0][0])+'_'+str(st.states[0][1])+'_'+str(directory.split('_')[-2:])
-                    f = open(PREFIX+tag+tempName+'_'+basis+'.txt','w')
+                    f = open(PREFIX+TAG+tempName+'_'+basis+'.txt','w')
                     if basis == 'sppp':
                         f.write('#Angle TME OscStr TME(sp_x) OscStr(sp_x) TME(sp_y) OscStr(sp_y) TME(sp_z) OscStr(sp_z)\n')
                     elif basis == 'shls':
@@ -257,9 +257,9 @@ if __name__ == '__main__':
             ax.plot(angles*na.pi/180.0,data[1]-min(data[1]),'o',label = last)
             ax.grid(True)
         plt.legend(bbox_to_anchor = (1.05, 1.0), loc=2, borderaxespad=1.)
-        plt.savefig(PREFIX+tag+'angOSC_'+st.states[0][0]+'_'+st.states[0][1]+'_'+basis+'.png')
+        plt.savefig(PREFIX+TAG+'angOSC_'+st.states[0][0]+'_'+st.states[0][1]+'_'+basis+'.png')
         plt.show()
-        fAng = open(PREFIX+tag+'angPos_'+st.states[0][0]+'_'+st.states[0][1]+'_'+basis+'.txt','w')
+        fAng = open(PREFIX+TAG+'angPos_'+st.states[0][0]+'_'+st.states[0][1]+'_'+basis+'.txt','w')
         fAng.write('#Var max(deg) min(deg) Val[110]/Val[1-10] ValMax ValMin PolDegree\n')
         for i in range(len(extremAngPos)):
             fAng.write('%e %f %f %e %e %e %e\n'%(extremAngPos[i][0],extremAngPos[i][1],extremAngPos[i][2],extremAngPos[i][3],extremAngPos[i][4],extremAngPos[i][5],extremAngPos[i][6]))
@@ -274,7 +274,7 @@ if __name__ == '__main__':
                     'transitions_dot_pol1.dat',
                     'transitions_dot_pol2.dat']
                 states = [ 4 , 5 ]
-                out = open(PREFIX+tag+'osc_strength_NN.txt','w')
+                out = open(PREFIX+TAG+'osc_strength_NN.txt','w')
                 out.write('#Val')
                 for data in NNoscStNames:
                     pol = data.split('.')[0].split('_')[-1]
