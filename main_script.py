@@ -12,9 +12,7 @@ import dipole_moment as dp
 import energy_extract as en
 import transition_probab_v1 as tpn
 import elastic_strain as stn
-import energy_extract_st as xt
 import avs2vtkr_conv as may
-import directory_names_nn3 as dn3
 import energy_extract_nn3 as en3
 import make2Dslice as sl
 import images2gif as gif
@@ -311,78 +309,6 @@ if __name__ == '__main__':
                     Name = 'alloy_composition'
                     for dir in dn.dir_n:
                         may.conv(PREFIX+dir+SUFFIX, Name, PREFIX, dir+'_'+str(Name) )
-
-        #extract electric field from nn3 calculations (ARRT pin diode)
-        if len(sys.argv)>1:
-            if sys.argv[1] == '-Enn3':
-                print sys.argv
-                Eint = []
-                EQD = []
-                stressVal = []
-                for item in dn3.dir_n:
-                    pathToE = dn3.path+item+'\\band_structure\\'
-                    stress = item.split('_')[-1]
-                    stressVal.append(float(stress))
-                    print "stress: ", stress
-                    Ustep = dn3.applU[2]
-                    noU = (dn3.applU[1]-dn3.applU[0]) / Ustep
-                    temp1 = []
-                    temp2 = []
-
-                    for i in range(int(noU)):
-                        file = pathToE+'electric_field1D_ind'+'%03d'%(i)+'.dat'
-                        if os.path.isfile(file):
-                            E = na.loadtxt(file, skiprows=1, unpack=True)
-                            Eintris = []
-                            EQDlayer = []
-                            for xi in range(len(E[0])):
-                                if E[0][xi]>dn3.intris[0] and E[0][xi]<dn3.QDlayer[0]-1:
-                                    Eintris.append(E[1][xi])
-                                elif E[0][xi]>dn3.QDlayer[1]+1 and E[0][xi]<dn3.intris[1]:
-                                    Eintris.append(E[1][xi])
-                                elif E[0][xi]>dn3.QDlayer[0] and E[0][xi]<dn3.QDlayer[1]:
-                                    EQDlayer.append(E[1][xi])
-                            temp1.append( [ i*Ustep, na.sum(Eintris)/float(len(Eintris)) ] )
-                            temp2.append( [ i*Ustep, na.sum(EQDlayer)/float(len(EQDlayer)) ] )
-                    EintrisUdep = zip(*temp1)
-                    Eint.append(EintrisUdep[1])
-                    EQDlayerUdep = zip(*temp2)
-                    EQD.append(EQDlayerUdep[1])
-                Uint = EintrisUdep[0]
-                UQD = EQDlayerUdep[0]
-                stOrient = dn3.pref.split('_')[-2][0]
-                print "stOrient: ", stOrient
-                crystOr = [ dn3.pref.split('_')[7].split('x')[0], dn3.pref.split('_')[7].split('x')[1] ]
-                if stOrient == 'x':
-                    outFilename = dn3.path+dn3.tag+'EINTvsU_stAlong_'+str(crystOr[0])+'.txt'
-                elif stOrient == 'y':
-                    outFilename = dn3.path+dn3.tag+'EINTvsU_stAlong_'+str(crystOr[1])+'.txt'
-                print "outFilename: ", outFilename
-                outF=open(outFilename, 'w')
-                outF.write('# U(V) E(V/m) ')
-                for i in range(len(stressVal)):
-                    outF.write('%.1e '%(stressVal[i]))
-                outF.write('\n')
-                for i in range(len(Uint)):
-                    outF.write('%.2f '%(Uint[i]))
-                    for j in range(len(Eint)):
-                        outF.write('%.0f '%(Eint[j][i]))
-                    outF.write('\n')
-                if stOrient == 'x':
-                    outFilename = dn3.path+dn3.tag+'EQDvsU_stAlong_'+str(crystOr[0])+'.txt'
-                elif stOrient == 'y':
-                    outFilename = dn3.path+dn3.tag+'EQDvsU_stAlong_'+str(crystOr[1])+'.txt'
-                print "outFilename", outFilename
-                outF = open(outFilename, 'w')
-                outF.write('# U(V) E(V/m) ')
-                for i in range(len(stressVal)):
-                    outF.write('%.1e '%(stressVal[i]))
-                    outF.write('\n')
-                for i in range(len(Uint)):
-                    outF.write('%.2f '%(UQD[i]))
-                    for j in range(len(EQD)):
-                        outF.write('%.0f '%(EQD[j][i]))
-                    outF.write('\n')
 
         if len(sys.argv)>1:
             if sys.argv[1] == '-hf':
