@@ -1,4 +1,6 @@
-"""This is the main script"""
+"""This is the main script
+"""
+
 import sys
 import os
 import states2transition as st
