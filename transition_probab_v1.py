@@ -194,8 +194,7 @@ class trans_probab():
     ny=self.ny
     nz=self.nz 
     buffers=[ self.read_data_from_NN( self.datname ).reshape((nx, ny, nz), order='FORTRAN') for self.datname in self.allDatnames ]
-    
-    
+    #print buffers[0]
     # ordering in this wf: real amplitudes + imag amplitudes + total density; ordering in nn++ wf: s up, s down, x, y, z up, z, y, z down
     # final ordering: s up, x, y, z up, s down, z, y, z down      real first 8, imag second 8 
     if ( wftype=='kp8' ): 
@@ -221,52 +220,111 @@ class trans_probab():
               buffers[0], 0*buffers[0], 0*buffers[0], 0*buffers[0], \
               0*buffers[0], 0*buffers[0], 0*buffers[0], 0*buffers[0], \
               0*buffers[0], 0*buffers[0], 0*buffers[0], 0*buffers[0] ]) # conversion to list necessary, would be treated as ndarray otherwise  
-
     dens=list([ data[i]**2+data[i+8]**2 for i in xrange(8) ])
     totaldens=0
     for i in xrange(8):
       totaldens+=dens[i]
-
     norm=na.sum(totaldens)
     data/=norm**0.5
     totaldens/=norm
-
     data=list(data)
-    data.append(totaldens)
+    #data.append(totaldens)
+    return data                                 
+
+  def make_alternate_WFkp8state (self, wftype='kp8', sbSpin=0 ): #, wftype='kp8' 
+    nx=self.nx
+    ny=self.ny
+    nz=self.nz 
+    buffers=[ self.read_data_from_NN( self.datname ).reshape((nx, ny, nz), order='FORTRAN') for self.datname in self.allDatnames ]
+    # ordering in this wf: real amplitudes + imag amplitudes + total density; ordering in nn++ wf: s up, s down, x, y, z up, z, y, z down
+    # final ordering: s up, x, y, z up, s down, z, y, z down      real first 8 
+    if (wftype=='kp8'): 
+      data = na.array([buffers[0] + buffers[8]*1j,
+                       buffers[2] + buffers[10]*1j,
+                       buffers[3]  + buffers[11]*1j,
+                       buffers[4]  + buffers[12]*1j,
+                       buffers[1]  + buffers[9]*1j,
+                       buffers[5]  + buffers[13]*1j,
+                       buffers[6]  + buffers[14]*1j,
+                       buffers[7] + buffers[15]*1j], 'complex')
+    else:
+        raise ValueError("ooooops, unrecognized wftype")
+    totaldens = na.sum(na.absolute(data), axis=0)
+    norm = na.sum(totaldens)
+    totaldens /= norm**2
+    data = na.append(data, totaldens)
+    print "shape", data.shape
     return data                                 
 
   # pocita transition matrix element (TME)
-  def makeTME ( self , kp8_1 , kp8_2 , pol ):
-    #print 'makeTME STARTED'
-
+  def makeTME (self, kp8_1, kp8_2, pol):
+    # print 'makeTME STARTED'
     # < psi1 | p | psi2 > ; psi = envelope * periodic:
-    #Tady se pocita prekryvovy integral, je to hranata zavorka ve Stierove diss str. 53, rov. (4.19)    
-    real = list([ pol[0]*( kp8_1[0]*kp8_2[1] - kp8_1[1]*kp8_2[0] - kp8_1[8]*kp8_2[9] + kp8_1[9]*kp8_2[8] + \
-                   kp8_1[4]*kp8_2[5] - kp8_1[5]*kp8_2[4] - kp8_1[12]*kp8_2[13] + kp8_1[13]*kp8_2[12] ) ,
-                  pol[1]*( kp8_1[0]*kp8_2[2] - kp8_1[2]*kp8_2[0] - kp8_1[8]*kp8_2[10] + kp8_1[10]*kp8_2[8] + \
-                   kp8_1[4]*kp8_2[6] - kp8_1[6]*kp8_2[4] - kp8_1[12]*kp8_2[14] + kp8_1[14]*kp8_2[12] ) ,
-                  pol[2]*( kp8_1[0]*kp8_2[3] - kp8_1[3]*kp8_2[0] - kp8_1[8]*kp8_2[11] + kp8_1[11]*kp8_2[8] + \
-                   kp8_1[4]*kp8_2[7] - kp8_1[7]*kp8_2[4] - kp8_1[12]*kp8_2[15] + kp8_1[15]*kp8_2[12] ) ])
+    # Tady se pocita prekryvovy integral, je to hranata zavorka
+    # ve Stierove diss str. 53, rov. (4.19)
+    # ordering: s up, x, y, z up
+    # s down, z, y, z down
+    # real first 8, imag second 8
 
-    imag = list([ pol[0]*( kp8_1[0]*kp8_2[9] - kp8_1[1]*kp8_2[8] + kp8_1[8]*kp8_2[1] - kp8_1[9]*kp8_2[0] + \
-                   kp8_1[4]*kp8_2[13] - kp8_1[5]*kp8_2[12] + kp8_1[12]*kp8_2[5] - kp8_1[13]*kp8_2[4] ) ,
-                  pol[1]*( kp8_1[0]*kp8_2[10] - kp8_1[2]*kp8_2[8] + kp8_1[8]*kp8_2[2] - kp8_1[10]*kp8_2[0] + \
-                   kp8_1[4]*kp8_2[14] - kp8_1[6]*kp8_2[12] + kp8_1[12]*kp8_2[6] - kp8_1[14]*kp8_2[4] ) ,
-                  pol[2]*( kp8_1[0]*kp8_2[11] - kp8_1[3]*kp8_2[8] + kp8_1[8]*kp8_2[3] - kp8_1[11]*kp8_2[0] + \
-                   kp8_1[4]*kp8_2[15] - kp8_1[7]*kp8_2[12] + kp8_1[12]*kp8_2[7] - kp8_1[15]*kp8_2[4] ) ])      
+    real = list([pol[0] * (kp8_1[0] * kp8_2[1]
+                               - kp8_1[1] * kp8_2[0]
+                               - kp8_1[8] * kp8_2[9]
+                               + kp8_1[9] * kp8_2[8]
+                               + kp8_1[4] * kp8_2[5]
+                               - kp8_1[5] * kp8_2[4]
+                               - kp8_1[12] * kp8_2[13]
+                               + kp8_1[13] * kp8_2[12]),
+                    pol[1] * (kp8_1[0] * kp8_2[2]
+                              - kp8_1[2] * kp8_2[0]
+                              - kp8_1[8] * kp8_2[10]
+                              + kp8_1[10] * kp8_2[8]
+                              + kp8_1[4] * kp8_2[6]
+                              - kp8_1[6] * kp8_2[4]
+                              - kp8_1[12] * kp8_2[14]
+                              + kp8_1[14] * kp8_2[12]),
+                    pol[2] * (kp8_1[0] * kp8_2[3]
+                              - kp8_1[3] * kp8_2[0]
+                              - kp8_1[8] * kp8_2[11]
+                              + kp8_1[11] * kp8_2[8]
+                              + kp8_1[4] * kp8_2[7]
+                              - kp8_1[7] * kp8_2[4]
+                              - kp8_1[12] * kp8_2[15]
+                              + kp8_1[15] * kp8_2[12])])
 
-    #return [ sp.multiply(P,real), sp.multiply(P,imag) ]
-    return [ real , imag ]
-
+    imag = list([pol[0] * (kp8_1[0] * kp8_2[9]
+                               - kp8_1[1] * kp8_2[8]
+                               + kp8_1[8] * kp8_2[1]
+                               - kp8_1[9] * kp8_2[0]
+                               + kp8_1[4] * kp8_2[13]
+                               - kp8_1[5] * kp8_2[12]
+                               + kp8_1[12] * kp8_2[5]
+                               - kp8_1[13] * kp8_2[4]),
+                    pol[1] * (kp8_1[0] * kp8_2[10]
+                              - kp8_1[2] * kp8_2[8]
+                              + kp8_1[8] * kp8_2[2]
+                              - kp8_1[10] * kp8_2[0]
+                              + kp8_1[4] * kp8_2[14]
+                              - kp8_1[6] * kp8_2[12] +
+                              kp8_1[12] * kp8_2[6] -
+                              kp8_1[14] * kp8_2[4]),
+                    pol[2] * (kp8_1[0] * kp8_2[11]
+                              - kp8_1[3] * kp8_2[8]
+                              + kp8_1[8] * kp8_2[3]
+                              - kp8_1[11] * kp8_2[0] +
+                              kp8_1[4] * kp8_2[15]
+                              - kp8_1[7] * kp8_2[12]
+                              + kp8_1[12] * kp8_2[7]
+                              - kp8_1[15] * kp8_2[4])])
+    # return [ sp.multiply(P,real), sp.multiply(P,imag) ]
+    return [real, imag]
   
   #Transition matrix element in basis of s,hh,lh,so
-  def makeTMEhls ( self , kp8_1 , kp8_2 , pol ):
+  def makeTMEhls (self, kp8_1, kp8_2, pol):
     #print 'makeTME STARTED'
-
     # < psi1 | p | psi2 > ; psi = envelope * periodic:
-    #Tady se pocita prekryvovy integral, v bazi <s,hh>,<s,lh>,<s,so>
-    #spin up: 0-3 (real) a 8-11 (imag)   horni radek    
-    #spin down: 4-7 (real) a 12-15 (imag)    dolni radek
+    # Tady se pocita prekryvovy integral, v bazi <s,hh>,<s,lh>,<s,so>
+    # spin up: 0-3 (real) a 8-11 (imag)   horni radek
+    # spin down: 4-7 (real) a 12-15 (imag)    dolni radek
     real = list([ pol[0]*1.0/na.sqrt(2.0)*(kp8_1[0]*kp8_2[1] - kp8_1[1]*kp8_2[0] + kp8_1[8]*kp8_2[9] - kp8_1[9]*kp8_2[8] + \
                     kp8_1[4]*kp8_2[5] - kp8_1[5]*kp8_2[4] + kp8_1[12]*kp8_2[13] - kp8_1[13]*kp8_2[12]) + \
                    pol[1]*1.0/na.sqrt(2.0)*(kp8_1[0]*kp8_2[10] - kp8_1[2]*kp8_2[8] - kp8_1[8]*kp8_2[2] + kp8_1[10]*kp8_2[0] - \
@@ -300,10 +358,8 @@ class trans_probab():
                     kp8_1[4]*kp8_2[6] - kp8_1[6]*kp8_2[4] + kp8_1[12]*kp8_2[14] - kp8_1[14]*kp8_2[12] ) + \
                    0.0*pol[2]*1.0/na.sqrt(3.0)*( kp8_1[0]*kp8_2[11] - kp8_1[3]*kp8_2[8] - kp8_1[8]*kp8_2[3] + kp8_1[11]*kp8_2[0] + \
                     kp8_1[4]*kp8_2[15] - kp8_1[7]*kp8_2[12] - kp8_1[12]*kp8_2[7] + kp8_1[15]*kp8_2[4] ) ])
-
     #return [ sp.multiply(P,real), sp.multiply(P,imag) ]
     return [ real , imag ]
-
 
   #Transform TME from {s,p_x,p_y,p_z} basis to {s,hh,lh,so} basis     UNFINISHED   !!!!!!!!!!!!!!!!!!!!!!!!! 
   def basisTrans ( real , imag ):
@@ -311,28 +367,62 @@ class trans_probab():
     hh_im=1/na.sqrt(2.0)*imag[2] 
 
 
-
-  
-  def loadWFs( self , wft1 , wft2 ):
+  def load_alternate_WFs(self , wft1 , wft2):
     wfStates = []
     stWeight = []
 
     for s in range(len(st.states)):
          print 'STATES', st.states[s][0], st.states[s][1]
-         stWeight.append( float(st.states[s][2]) )
-         if len(st.states[s][0].split('_'))==1:
+         stWeight.append(float(st.states[s][2]))
+         if len(st.states[s][0].split('_')) == 1:
+            st1=int(st.states[s][0])
+            st2=int(st.states[s][1])
+            spin=0          
+            #TME.append(self.makeTME (st1 , st2 , wft1 , wft2))
+         elif len(st.states[s][0].split('_')) == 2:
+            st1=int(st.states[s][0].split('_')[0])
+            spin=int(st.states[s][0].split('_')[1])
+            st2=int(st.states[s][1])
+            #TME.append(self.makeTME (st1 , st2 , wft1 , wft2 , spin=Spin1))
+
+         #Nacteni obou wf:
+    
+         #state 1
+         self.readSizesFromFld(st1 , wft1)
+         nx1=self.nx
+         ny1=self.ny
+         nz1=self.nz
+         self.generateWFNames (st1 , wft1)
+         alternate_kp8_1 = self.make_alternate_WFkp8state(wft1, sbSpin=spin)
+        
+         #state 2
+         self.readSizesFromFld(st2 , wft2)
+         nx2=self.nx
+         ny2=self.ny
+         nz2=self.nz
+         self.generateWFNames (st2 , wft2)
+         alternate_kp8_2 = self.make_alternate_WFkp8state(wft2)
+
+         wfStates.append([alternate_kp8_1 , alternate_kp8_2])
+    return (wfStates, stWeight)
+  
+  def loadWFs( self , wft1 , wft2):
+    wfStates = []
+    stWeight = []
+    for s in range(len(st.states)):
+         print 'STATES', st.states[s][0], st.states[s][1]
+         stWeight.append(float(st.states[s][2]))
+         if len(st.states[s][0].split('_')) == 1:
             st1=int(st.states[s][0])
             st2=int(st.states[s][1])
             spin=0          
             #TME.append(self.makeTME ( st1 , st2 , wft1 , wft2 ))
-         elif len(st.states[s][0].split('_'))==2:
+         elif len(st.states[s][0].split('_')) == 2:
             st1=int(st.states[s][0].split('_')[0])
-            spin=int(st.states[s][0].split('_')[1])  
+            spin=int(st.states[s][0].split('_')[1])
             st2=int(st.states[s][1])
             #TME.append(self.makeTME ( st1 , st2 , wft1 , wft2 , spin=Spin1 ))
-
          #Nacteni obou wf:
-    
          #state 1
          self.readSizesFromFld( st1 , wft1 )
          nx1=self.nx
@@ -340,7 +430,6 @@ class trans_probab():
          nz1=self.nz
          self.generateWFNames ( st1 , wft1 )
          kp8_1 = self.makeWFkp8state( wft1 , sbSpin=spin )
-    
          #state 2
          self.readSizesFromFld( st2 , wft2 )
          nx2=self.nx
@@ -348,9 +437,8 @@ class trans_probab():
          nz2=self.nz
          self.generateWFNames ( st2 , wft2 )
          kp8_2 = self.makeWFkp8state( wft2 )
-
-         wfStates.append( [ kp8_1 , kp8_2 ] )
-    return [ wfStates , stWeight ]
+         wfStates.append([kp8_1, kp8_2])
+    return (wfStates, stWeight)
 
   # material type: matType='IIIdivV' or matType='SiGe'
   #  PRESENTLY DUE TO COMPUTATIONAL TIME DEMAND EXPECTS
@@ -361,9 +449,9 @@ class trans_probab():
 
     wft1 = st.wftype[0]
     wft2 = st.wftype[1]
-    wfs = self.loadWFs(wft1, wft2)
-    kp8wf = wfs[0]
-    stWeight = wfs[1]
+    kp8wf, stWeight = self.loadWFs(wft1, wft2)
+    print "len", len(kp8wf)
+    print "len2", len(kp8wf[0][0])
     WeightNorm = na.sum(stWeight)
 
     # Eab=abs(self.retrieveWFEnergy( st1 , wft1 )
@@ -380,27 +468,10 @@ class trans_probab():
             st1 = int(st.states[0][1].split('_')[0])
     coordForEp = self.allDatnames[0][:-4] + '.coord'
     Ep = self.makeEp(coordForEp, st1, st2, wft1, wft2)
-
     # Prepocet Ep na P
     P = sp.sqrt(Ep)
     pol = na.array(pol)
-
-    polNorm = []
-    # polNorm=na.array([])
-
-    print '\nCalculating polarization dependence\n'
-
-    for i in range(len(pol)):
-        # Normovana polarizace
-        # polNorm.append([ float(pol[i][0])/na.sum(pol[i]**2.0) ,
-        # float(pol[i][1])/na.sum(pol[i]**2.0),
-        # float(pol[i][2])/na.sum(pol[i]**2.0) ])
-        polNorm.append([float(pol[i][0])/na.sqrt(na.sum(pol[i]**2.0)),
-                        float(pol[i][1])/na.sqrt(na.sum(pol[i]**2.0)),
-                        float(pol[i][2])/na.sqrt(na.sum(pol[i]**2.0))])
-        # Nenanormovane
-        # polNorm.append([ float(pol[i][0]) , float(pol[i][1]) ,
-        # float(pol[i][2]) ])
+    polNorm = [elem / na.sqrt(na.sum(elem ** 2)) for elem in pol]
     matrixEl = []
     matrixEl1 = []
     matrixEl2 = []
@@ -476,4 +547,3 @@ class trans_probab():
               matrixEl2, oscSt2, matrixEl3, oscSt3]
     print '\nPolarization calculations finished\n'
     return polDep
-
