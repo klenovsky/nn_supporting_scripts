@@ -1,19 +1,16 @@
-import sys, os
-import numpy as na
+# FOR SIGE
+# wftype = [ 'x3' , 'kp6' ]
 
-#FOR SIGE
-#wftype = [ 'x3' , 'kp6' ]
-
-#FOR III-V
+# FOR III-V
 wftype = [ 'kp8' , 'kp8' ]
 
 
-#states typically expected in the form: (hole state),(electron state),(amount)
+# states typically expected in the form: (hole state),(electron state),(amount)
 states = [
-['1','3',0.25],
-['1','4',0.25],
-['2','3',0.25],
-['2','4',0.25],
+    ['1', '3', 0.25],
+    ['1', '4', 0.25],
+    ['2', '3', 0.25],
+    ['2', '4', 0.25],
 
 
 
@@ -67,10 +64,10 @@ states = [
 #'3_0', '4', 0.25,
 #'3_1', '3', 0.25,
 #'3_1', '4', 0.25,
-]
+    ]
 
 #nextnano3 wfs order: (electron) (hole) (amount)
-wftypeNN3 = '8x8'  #or '1x6'
-statesNN3=[
-'1', '2', 1.0,
-]
+wftypeNN3 = '8x8'  # or '1x6'
+statesNN3 = [
+    '1', '2', 1.0,
+    ]

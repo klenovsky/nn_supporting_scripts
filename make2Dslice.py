@@ -1,17 +1,19 @@
-import sys,os,states2transition as st
 import numpy as na
-import scipy as sp
-import bisect as bi
-from intergrid import Intergrid 
 from scipy import ndimage
-import numpy.polynomial.legendre as L
 import matplotlib.pyplot as plt
-from mpl_toolkits.mplot3d.axes3d import Axes3D
 import directory_names as dn
-#import matplotlib.image as mpimg
+import scipy.constants as constants
+import getpass
+import os
+import sys
+if getpass.getuser() == 'dominique':
+    if 'intergrid' not in 'sys.path':
+        sys.path.append(os.path.relpath('..//interpol/intergrid'))
+from intergrid import Intergrid
 
-hbar=1.054571726*10**(-34)
-e=1.602176565*10**(-19)
+hbar = constants.hbar
+e = constants.e
+
 
 class makeCut():
   def __init__(self , name ):
@@ -23,30 +25,15 @@ class makeCut():
       #self.ny=20
       #self.nz=10
 
-
-
-
-
   #Funkce pro nacitani dat z nextnano souboru 'filename', stejne jako v strain_from_nextnano_to_csi.py
   def read_data_from_NN( self , filename ):
     buffer=na.fromfile( filename,  sep='\n' )
     return buffer
 
-
-
-
-
-
   def normProb( self, prob):
     norm=na.sum(prob)
     probOut=prob/norm 
     return probOut
-
-
-
-
-
-
 
   #Funkce pro nacitani poctu datovych bodu, asi stejne jako v strain_from_nextnano_to_csi.py, nadbytecna funkce
   def readDimensions ( self, fldname ):
