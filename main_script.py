@@ -1,14 +1,13 @@
 """This is the main script
 """
-
 import sys
+import os
 import numpy as na
 import scipy as sp
 import matplotlib.pyplot as plt
 import directory_names as dn
 import dipole_moment as dp
 import energy_extract as en
-import states2transition as st
 import elastic_strain as stn
 import avs2vtkr_conv as may
 import energy_extract_nn3 as en3
@@ -28,12 +27,15 @@ def main():
          [angle end (deg) ] [ no of angles ]
     """
     print 'this is make_dep.py\n\n'
+    # Why is this import now working
+    # from the top level?
+    import states2transition as st
     # DEFINING COMMON STRINGS
-    prefix = dn.path
-    suffix = '\\output\\'
+    prefix = dn.prefix
+    suffix = 'output'
     print "prefix: ", prefix
     # NEEDED TO DISTINGUISH BETWEEN CALCULATIONS
-    tag = prefix.split('//')[-1].split('_')[-1][:-1] + '_'
+    tag = prefix.split(os.sep)[-1].split('_')[-1] + '_'
     print "tag: ", tag
     xval = []
     yval = []
@@ -54,7 +56,7 @@ def main():
         f_moment.write('#Dipole moment between states %i %i\n' % (st_h, st_e))
         f_moment.write('#x y z\n')
         for local_file in dn.dir_n:
-            filename = prefix+local_file+suffix
+            filename = os.path.join(prefix, local_file, suffix)
             dip_mom = dp.dipole(prefix=filename, no_e=st_e, no_h=st_h)
             moment = dip_mom.calc_e_h_dipole()
             print local_file.split('_')[-1], moment
@@ -73,7 +75,7 @@ def main():
 
             dp_name = (prefix + tag + 'dipole_moment_' + str(st_e) + '_'
                        + str(st_h) + '.txt')
-            print dp_name
+            print "dp_name: ", dp_name
             f_moment = open(dp_name, 'w')
             f_moment.write('#Dipole moment between states %i %i\n'
                            % (st_h, st_e))
@@ -235,12 +237,13 @@ def main():
                 for directory in dn.dir_n:
                     print 'DIR: ', directory
                     ax = plt.subplot(121, polar=True)
-                    filename = prefix + directory + suffix
+                    filename = os.path.join(prefix, directory, suffix)
                     last = float(directory.split('_')[-1])
+                    print "last", last
                     start = float(sys.argv[2])
                     end = float(sys.argv[3])
                     step = int(sys.argv[4])
-                    print "step: ", step, type(step)
+                    print "step: ", step  # type(step)
                     angles = na.linspace(start, end, num=step)
                     out = []
                     tempName = ('PolDepTME_' + str(st.states[0][0])
@@ -276,7 +279,7 @@ def main():
                 # polarization.append([ na.cos((angles[i]+45)/180.0*sp.pi),
                 # na.sin((angles[i]+45)/180.0*sp.pi)*na.cos((angle_z)/180.0
                 # *sp.pi) , na.sin((angle_z)/180.0*sp.pi) ])
-            cProfile_params = ('data=trans.makePolDep(polarization,'
+            cProfile_params = ('data=transition_probab_v1.makePolDep(polarization,'
                                + 'basisType=basis)')
             cProfile.run(cProfile_params, 'fit_run_info.txt')
             print '\nTime of fit run:\n\n'

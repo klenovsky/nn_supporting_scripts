@@ -8,7 +8,7 @@ import os
 import sys
 if getpass.getuser() == 'dominique':
     if 'intergrid' not in 'sys.path':
-        sys.path.append(os.path.relpath('..//interpol/intergrid'))
+        sys.path.append(os.path.relpath('../interpol/intergrid'))
 from intergrid import Intergrid
 
 hbar = constants.hbar
