@@ -15,6 +15,12 @@ import make2Dslice as sl
 import images2gif as gif
 import cProfile
 import pstats
+import StringIO
+import getpass
+if getpass.getuser() == 'dominique':
+    if 'Scripts' not in 'sys.path':
+        sys.path.append(os.path.relpath('.'))
+
 # pylint: disable=C0303
 # pylint: disable=R0912
 # pylint: disable=R0914
@@ -33,10 +39,8 @@ def main():
     # DEFINING COMMON STRINGS
     prefix = dn.prefix
     suffix = 'output'
-    print "prefix: ", prefix
     # NEEDED TO DISTINGUISH BETWEEN CALCULATIONS
     tag = prefix.split(os.sep)[-1].split('_')[-1] + '_'
-    print "tag: ", tag
     xval = []
     yval = []
     yval2 = []
@@ -279,12 +283,17 @@ def main():
                 # polarization.append([ na.cos((angles[i]+45)/180.0*sp.pi),
                 # na.sin((angles[i]+45)/180.0*sp.pi)*na.cos((angle_z)/180.0
                 # *sp.pi) , na.sin((angle_z)/180.0*sp.pi) ])
-            cProfile_params = ('data=transition_probab_v1.makePolDep(polarization,'
-                               + 'basisType=basis)')
-            cProfile.run(cProfile_params, 'fit_run_info.txt')
-            print '\nTime of fit run:\n\n'
-            tim = pstats.Stats('fit_run_info.txt')
-            tim.strip_dirs().sort_stats('time').print_stats(5)
+            import transition_probab_v1 as trans
+            my_trans = trans.trans_probab(prefix=filename)
+            pr = cProfile.Profile()
+            pr.enable()
+            data = my_trans.makePolDep(polarization, basisType=basis)
+            pr.disable()
+            s = StringIO.StringIO()
+            sortby = 'cumulative'
+            ps = pstats.Stats(pr, stream=s).sort_stats(sortby)
+            ps.print_stats()
+            print s.getvalue()
             for i in range(len(angles)):
                 out.append([angles[i],
                             data[0][i], data[1][i], data[2][i], data[3][i],
@@ -361,8 +370,8 @@ def main():
                     if buf[1][j] == states[0] and buf[2][j] == states[1]:
                         print buf[3][j]
                         out.write(' %f' % (float(buf[3][j])))
-            out.write('\n')
-        out.close()
+                out.write('\n')
+                out.close()
 
         # convert to vtk file for 3D data imaging by mayavi
         if len(sys.argv) > 1:

@@ -19,8 +19,8 @@ class trans_probab():
       
     
   #Funkce pro nacitani dat z nextnano souboru 'filename', stejne jako v strain_from_nextnano_to_csi.py
-  def read_data_from_NN( self , filename ):
-    buffer=na.fromfile( filename,  sep='\n' )	
+  def read_data_from_NN( self , filename):
+    buffer=na.fromfile( filename,  sep='\n' )
     return buffer
 
   #Funkce pro nacitani poctu datovych bodu, asi stejne jako v strain_from_nextnano_to_csi.py, nadbytecna funkce
@@ -37,14 +37,14 @@ class trans_probab():
     
   #Funkce pro nacteni energie stavu s cislem 'state', stejne jako v strain_from_nextnano_to_csi.py
   def retrieveWFEnergy( self, state, wftype='kp8' ):
-    f=open(self.prefix+'wf_spectrum_dot_'+wftype+'.dat', 'r')
+    f=open(os.path.join(self.prefix, 'wf_spectrum_dot_'+wftype+'.dat'), 'r')
     lines=f.readlines()
     return float( lines[state].split()[1] )
 
   #Funkce pro nacteni rozmeru 8kp wf s poradovym cislem 'state', stejne jako v strain_from_nextnano_to_csi.py
   def readSizesFromFld( self, state , wftype ):
-    #print state    
-    fldname=self.prefix+'wf_amplitude_real_dot_'+wftype+'_1_0000_00%02i.fld'%(state)
+    #print state
+    fldname= os.path.join(self.prefix, 'wf_amplitude_real_dot_'+wftype+'_1_0000_00%02i.fld'%(state))
 
     #print fldname
     f=open(fldname,'r')
@@ -63,9 +63,9 @@ class trans_probab():
   #Funkce generujici Ep jako funkci prostorove souradnice, pouzita je linearni interpolace mezi prislusnymi konstituenty
   def makeEp( self , coordNameToFit , state1=8 , state2=9 , wftype1='kp8' , wftype2='kp8' ):
     #print    
-    alloyname = self.prefix+'alloy_composition.dat'
-    fldname=self.prefix+'alloy_composition.fld'
-    coordname=self.prefix+'alloy_composition.coord'
+    alloyname = os.path.join(self.prefix, 'alloy_composition.dat')
+    fldname=os.path.join(self.prefix, 'alloy_composition.fld')
+    coordname=os.path.join(self.prefix, 'alloy_composition.coord')
 
     dim=self.readDimensions( fldname )
     nx=dim[0]
@@ -157,8 +157,8 @@ class trans_probab():
     #real=[ 'wf_amplitude_real_dot_'+wftype+'_'+str(i)+'_'+'_'.join(str(state))+'.dat' for i in xrange(1,9)]
     
     if wftype == 'kp8':
-         real=[ self.prefix+'wf_amplitude_real_dot_'+wftype+'_'+str(i)+'_0000_00%02i.dat'%(state) for i in xrange(1,9)]
-         imag=[ self.prefix+'wf_amplitude_imag_dot_'+wftype+'_'+str(i)+'_0000_00%02i.dat'%(state) for i in xrange(1,9)]
+         real=[ os.path.join(self.prefix, 'wf_amplitude_real_dot_'+wftype+'_'+str(i)+'_0000_00%02i.dat'%(state)) for i in xrange(1,9)]
+         imag=[os.path.join(self.prefix, 'wf_amplitude_imag_dot_'+wftype+'_'+str(i)+'_0000_00%02i.dat'%(state)) for i in xrange(1,9)]
 
          #real=[ self.path+'wf_amplitude_real_dot_kp8_'+str(i)+'_'+'_'.join(parts[6:])+'.dat' for i in xrange(1,9)]
          #imag=[ self.path+'wf_amplitude_imag_dot_kp8_'+str(i)+'_'+'_'.join(parts[6:])+'.dat' for i in xrange(1,9)]
@@ -354,8 +354,6 @@ class trans_probab():
     
 
 
- 
- 
   #material type: matType='IIIdivV' or matType='SiGe'
   #PRESENTLY DUE TO COMPUTATIONAL TIME DEMAND EXPECTS THE SAME TRANSITION ENERGY BETWEEN STATES FOR CALCULATION OF EP
   #different types of basis: basisType='sppp' or basisType='shls'  
