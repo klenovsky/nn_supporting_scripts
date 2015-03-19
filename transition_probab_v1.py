@@ -231,7 +231,7 @@ class trans_probab():
     #data.append(totaldens)
     return data                                 
 
-  def make_alternate_WFkp8state (self, wftype='kp8', sbSpin=0 ): #, wftype='kp8' 
+  def make_alternate_WFkp8state (self, wftype='kp8', sbSpin=0 ): #, wftype='kp8'
     nx=self.nx
     ny=self.ny
     nz=self.nz 
@@ -251,12 +251,21 @@ class trans_probab():
         raise ValueError("ooooops, unrecognized wftype")
     norm = na.sum(na.absolute(data))
     data /= norm
-    return data
+    sup_values = data[0].ravel()
+    sdown_values= data[4].ravel()
+    all_x_up = data[1].ravel()
+    all_y_up = data[2].ravel()
+    all_z_up = data[3].ravel()
+    fup_vectors = na.column_stack((all_x_up, all_y_up, all_z_up))
+    all_x_down = data[5].ravel()
+    all_y_down = data[6].ravel()
+    all_z_down = data[7].ravel()    
+    fdown_vectors = na.column_stack((all_x_down, all_y_down, all_z_down))
+    return (fup_vectors, fdown_vectors, sup_values, sdown_values)
 
   def cache_quantities(self):
     pass
-  
-  # pocita transition matrix element (TME)
+
   def makeTME (self, kp8_1, kp8_2, pol):
     # print 'makeTME STARTED'
     # < psi1 | p | psi2 > ; psi = envelope * periodic:
@@ -317,6 +326,18 @@ class trans_probab():
                               - kp8_1[15] * kp8_2[4])])
     # return [ sp.multiply(P,real), sp.multiply(P,imag) ]
     return [real, imag]
+    
+  # pocita transition matrix element (TME)
+  def make_alternate_TME (self, pol, intermediate_vector):
+    # print 'makeTME STARTED'
+    # < psi1 | p | psi2 > ; psi = envelope * periodic:
+    # Tady se pocita prekryvovy integral, je to hranata zavorka
+    # ve Stierove diss str. 53, rov. (4.19)
+    # ordering: s up, x, y, z up
+    # s down, z, y, z down
+    # real first 8, imag second 8
+    out = pol * intermediate_vector
+    return [out.real, out.imag]
   
   #Transition matrix element in basis of s,hh,lh,so
   def makeTMEhls (self, kp8_1, kp8_2, pol):
@@ -428,12 +449,15 @@ class trans_probab():
   # THE SAME TRANSITION ENERGY BETWEEN STATES FOR CALCULATION OF EP
   # different types of basis: basisType='sppp' or basisType='shls'
   def makePolDep(self, pol=[[1, 1, 0]], basisType='sppp'):
+    local_mode = 'classical'
     print '\nMaking transition matrix elements\n'
 
     wft1 = st.wftype[0]
     wft2 = st.wftype[1]
-    alternate_kp8wf, alternate_stWeight = self.load_alternate_WFs(wft1, wft2)    
-    kp8wf, stWeight = self.loadWFs(wft1, wft2)
+    if local_mode == 'alternate':
+      kp8wf, stWeight = self.load_alternate_WFs(wft1, wft2)
+    else:
+      kp8wf, stWeight = self.loadWFs(wft1, wft2)
     WeightNorm = na.sum(stWeight)
 
     # Eab=abs(self.retrieveWFEnergy( st1 , wft1 )
@@ -483,7 +507,25 @@ class trans_probab():
         Fel3 = []
         for i in range(len(kp8wf)):
             if basisType == 'sppp':
-                TME.append(self.makeTME(kp8wf[i][0], kp8wf[i][1], iter))
+              if local_mode == 'alternate':
+                  sup_values_i = kp8wf[i][0][0]
+                  fup_vectors_i = kp8wf[i][0][1]
+                  sdown_values_i = kp8wf[i][0][2]
+                  fdown_vectors_i = kp8wf[i][0][3]
+                  sup_values_f = kp8wf[i][1][0]
+                  fup_vectors_f = kp8wf[i][1][1]
+                  sdown_values_f = kp8wf[i][1][2]
+                  fdown_vectors_f = kp8wf[i][1][3]
+                  # TODO: check correct account of direction of scalar product
+                  # with conjugation, compared to sign of imaginary part in
+                  # classical implementation.
+                  intermediate_vector = sup_values_i * fup_vectors_f
+                  intermediate_vector += sdown_values_i[:,None] * fdown_vectors_f
+                  intermediate_vector -= (sup_values_f[:,None] * fup_vectors_i).conjugate()
+                  intermediate_vector -=(sdown_values_f[:,None] * fdown_vectors_i).conjugate()
+                  TME.append(self.make_alternate_TME(iter, intermediate_vector))
+              else:
+                  TME.append(self.makeTME(kp8wf[i][0], kp8wf[i][1], iter))
             elif basisType == 'shls':
                 TME.append(self.makeTMEhls(kp8wf[i][0], kp8wf[i][1], iter))
             MEreal = TME[i][0][0] + TME[i][0][1] + TME[i][0][2]
@@ -530,3 +572,4 @@ class trans_probab():
               matrixEl2, oscSt2, matrixEl3, oscSt3]
     print '\nPolarization calculations finished\n'
     return polDep
+
