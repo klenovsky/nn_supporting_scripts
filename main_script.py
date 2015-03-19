@@ -293,6 +293,7 @@ def main():
             sortby = 'cumulative'
             ps = pstats.Stats(pr, stream=s).sort_stats(sortby)
             ps.print_stats()
+            ps.dump_stats("stat_file.txt")
             print s.getvalue()
             for i in range(len(angles)):
                 out.append([angles[i],

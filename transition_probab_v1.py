@@ -314,11 +314,11 @@ class trans_probab():
 
   
   def loadWFs( self , wft1 , wft2 ):
-    wfStates=[]
-    stWeight=[]
+    wfStates = []
+    stWeight = []
 
     for s in range(len(st.states)):
-         print 'STATES',st.states[s][0], st.states[s][1]
+         print 'STATES', st.states[s][0], st.states[s][1]
          stWeight.append( float(st.states[s][2]) )
          if len(st.states[s][0].split('_'))==1:
             st1=int(st.states[s][0])
@@ -351,143 +351,129 @@ class trans_probab():
 
          wfStates.append( [ kp8_1 , kp8_2 ] )
     return [ wfStates , stWeight ]
-    
 
-
-  #material type: matType='IIIdivV' or matType='SiGe'
-  #PRESENTLY DUE TO COMPUTATIONAL TIME DEMAND EXPECTS THE SAME TRANSITION ENERGY BETWEEN STATES FOR CALCULATION OF EP
-  #different types of basis: basisType='sppp' or basisType='shls'  
-  def makePolDep( self , pol=[[1, 1, 0]] , basisType='sppp' ):    
+  # material type: matType='IIIdivV' or matType='SiGe'
+  #  PRESENTLY DUE TO COMPUTATIONAL TIME DEMAND EXPECTS
+  # THE SAME TRANSITION ENERGY BETWEEN STATES FOR CALCULATION OF EP
+  # different types of basis: basisType='sppp' or basisType='shls'
+  def makePolDep(self, pol=[[1, 1, 0]], basisType='sppp'):
     print '\nMaking transition matrix elements\n'
 
-    wft1=st.wftype[0]    
-    wft2=st.wftype[1]
-    
-    wfs=self.loadWFs( wft1 , wft2 )
-    kp8wf=wfs[0]
-    stWeight=wfs[1]
-    
-    WeightNorm=na.sum(stWeight)
+    wft1 = st.wftype[0]
+    wft2 = st.wftype[1]
+    wfs = self.loadWFs(wft1, wft2)
+    kp8wf = wfs[0]
+    stWeight = wfs[1]
+    WeightNorm = na.sum(stWeight)
 
-    #Eab=abs(self.retrieveWFEnergy( st1 , wft1 )-self.retrieveWFEnergy( st2 , wft2 ))
+    # Eab=abs(self.retrieveWFEnergy( st1 , wft1 )
+    # -self.retrieveWFEnergy(st2, wft2))
+    # attempt on proper treatment of Ep
+    # Nacteni Ep jakozto funkce prostrove souradnice
+    if len(st.states[0][0].split('_')) == 1:
+            st1 = int(st.states[0][0])
+    elif len(st.states[0][0].split('_')) == 2:
+            st1 = int(st.states[0][0].split('_')[0])
+    if len(st.states[0][1].split('_')) == 1:
+            st2 = int(st.states[0][1])
+    elif len(st.states[0][1].split('_')) == 2:
+            st1 = int(st.states[0][1].split('_')[0])
+    coordForEp = self.allDatnames[0][:-4] + '.coord'
+    Ep = self.makeEp(coordForEp, st1, st2, wft1, wft2)
 
-    #attempt on proper treatment of Ep
-    #Nacteni Ep jakozto funkce prostrove souradnice
-    if len(st.states[0][0].split('_'))==1:
-            st1=int(st.states[0][0])
-    elif len(st.states[0][0].split('_'))==2:
-            st1=int(st.states[0][0].split('_')[0])
-    if len(st.states[0][1].split('_'))==1:
-            st2=int(st.states[0][1])
-    elif len(st.states[0][1].split('_'))==2:
-            st1=int(st.states[0][1].split('_')[0])
-    coordForEp=self.allDatnames[0][:-4]+'.coord'
-    Ep=self.makeEp( coordForEp , st1 , st2 , wft1 , wft2 )
+    # Prepocet Ep na P
+    P = sp.sqrt(Ep)
+    pol = na.array(pol)
 
-    #Prepocet Ep na P    
-    P=sp.sqrt(Ep)
- 
-    pol=na.array(pol)
-
-    polNorm=[]
-    #polNorm=na.array([])
+    polNorm = []
+    # polNorm=na.array([])
 
     print '\nCalculating polarization dependence\n'
 
     for i in range(len(pol)):
-        #Normovana polarizace
-        #polNorm.append([ float(pol[i][0])/na.sum(pol[i]**2.0) , float(pol[i][1])/na.sum(pol[i]**2.0) , float(pol[i][2])/na.sum(pol[i]**2.0) ])        
-        polNorm.append([ float(pol[i][0])/na.sqrt(na.sum(pol[i]**2.0)) , float(pol[i][1])/na.sqrt(na.sum(pol[i]**2.0)) , float(pol[i][2])/na.sqrt(na.sum(pol[i]**2.0)) ])
-        #Nenanormovane
-        #polNorm.append([ float(pol[i][0]) , float(pol[i][1]) , float(pol[i][2]) ])
-    
-    
-    matrixEl=[]
-    matrixEl1=[]
-    matrixEl2=[]
-    matrixEl3=[] 
-    oscSt=[]   
-    oscSt1=[]
-    oscSt2=[]
-    oscSt3=[]
+        # Normovana polarizace
+        # polNorm.append([ float(pol[i][0])/na.sum(pol[i]**2.0) ,
+        # float(pol[i][1])/na.sum(pol[i]**2.0),
+        # float(pol[i][2])/na.sum(pol[i]**2.0) ])
+        polNorm.append([float(pol[i][0])/na.sqrt(na.sum(pol[i]**2.0)),
+                        float(pol[i][1])/na.sqrt(na.sum(pol[i]**2.0)),
+                        float(pol[i][2])/na.sqrt(na.sum(pol[i]**2.0))])
+        # Nenanormovane
+        # polNorm.append([ float(pol[i][0]) , float(pol[i][1]) ,
+        # float(pol[i][2]) ])
+    matrixEl = []
+    matrixEl1 = []
+    matrixEl2 = []
+    matrixEl3 = []
+    oscSt = []
+    oscSt1 = []
+    oscSt2 = []
+    oscSt3 = []
     for iter in polNorm:
-       TME=[]
-       M=[]
-       M1=[]
-       M2=[]
-       M3=[] 
-       F=[]
-       F1=[]
-       F2=[]
-       F3=[]
-       Mel=[]
-       Mel1=[]
-       Mel2=[]
-       Mel3=[]
-       Fel=[] 
-       Fel1=[]
-       Fel2=[]
-       Fel3=[]
-        
-       for i in range(len(kp8wf)):
-         if basisType=='sppp':
-            TME.append(self.makeTME ( kp8wf[i][0] , kp8wf[i][1] , iter ))
-         elif basisType=='shls':
-            TME.append(self.makeTMEhls ( kp8wf[i][0] , kp8wf[i][1] , iter ))  
-         MEreal= TME[i][0][0] + TME[i][0][1] + TME[i][0][2]  
-         MEimag= TME[i][1][0] + TME[i][1][1] + TME[i][1][2] 
-         
-         sumOfME=(na.sum(P*MEreal))**2+(na.sum(P*MEimag))**2
-         sumOfME_1=(na.sum(P*TME[i][0][0]))**2+(na.sum(P*TME[i][1][0]))**2
-         sumOfME_2=(na.sum(P*TME[i][0][1]))**2+(na.sum(P*TME[i][1][1]))**2
-         sumOfME_3=(na.sum(P*TME[i][0][2]))**2+(na.sum(P*TME[i][1][2]))**2 
-         
-         M.append(sumOfME)
-         M1.append(sumOfME_1)
-         M2.append(sumOfME_2)
-         M3.append(sumOfME_3)
-         if len(st.states[i][0].split('_'))==1:
-            st1=int(st.states[i][0])
-         elif len(st.states[i][0].split('_'))==2:
-            st1=int(st.states[i][0].split('_')[0])
-         if len(st.states[i][1].split('_'))==1:
-            st2=int(st.states[i][1])
-         elif len(st.states[i][1].split('_'))==2:
-            st1=int(st.states[i][1].split('_')[0])
-         Eab=abs(self.retrieveWFEnergy( st1 , wft1 )-self.retrieveWFEnergy( st2 , wft2 ))
-         F.append(sp.true_divide(sumOfME,Eab))
-         F1.append(sp.true_divide(sumOfME_1,Eab))
-         F2.append(sp.true_divide(sumOfME_2,Eab))
-         F3.append(sp.true_divide(sumOfME_3,Eab)) 
-         
-         Mel.append([ M[i]*stWeight[i]/WeightNorm ])
-         Mel1.append([ M1[i]*stWeight[i]/WeightNorm ])
-         Mel2.append([ M2[i]*stWeight[i]/WeightNorm ])
-         Mel3.append([ M3[i]*stWeight[i]/WeightNorm ])
-         Fel.append([ F[i]*stWeight[i]/WeightNorm ])
-         Fel1.append([ F1[i]*stWeight[i]/WeightNorm ])
-         Fel2.append([ F2[i]*stWeight[i]/WeightNorm ])
-         Fel3.append([ F3[i]*stWeight[i]/WeightNorm ])
-       matrixEl.append( na.sum(Mel) )
-       matrixEl1.append( na.sum(Mel1) )
-       matrixEl2.append( na.sum(Mel2) )
-       matrixEl3.append( na.sum(Mel3) )
-       oscSt.append( na.sum(Fel) )
-       oscSt1.append( na.sum(Fel1) )
-       oscSt2.append( na.sum(Fel2) )
-       oscSt3.append( na.sum(Fel3) )
-       
-       #print 'Polariz. oord.: [ %.2f , %.2f , %.2f ] %.3f'%(iter[0],iter[1],iter[2],matrixEl[-1])
-       
-    polDep = [ matrixEl , oscSt , matrixEl1 , oscSt1 , matrixEl2 , oscSt2 , matrixEl3 , oscSt3 ]
-
+        TME = []
+        M = []
+        M1 = []
+        M2 = []
+        M3 = []
+        F = []
+        F1 = []
+        F2 = []
+        F3 = []
+        Mel = []
+        Mel1 = []
+        Mel2 = []
+        Mel3 = []
+        Fel = []
+        Fel1 = []
+        Fel2 = []
+        Fel3 = []
+        for i in range(len(kp8wf)):
+            if basisType == 'sppp':
+                TME.append(self.makeTME(kp8wf[i][0], kp8wf[i][1], iter))
+            elif basisType == 'shls':
+                TME.append(self.makeTMEhls(kp8wf[i][0], kp8wf[i][1], iter))
+            MEreal = TME[i][0][0] + TME[i][0][1] + TME[i][0][2]
+            MEimag = TME[i][1][0] + TME[i][1][1] + TME[i][1][2]
+            sumOfME = (na.sum(P*MEreal))**2+(na.sum(P*MEimag))**2
+            sumOfME_1 = (na.sum(P*TME[i][0][0]))**2+(na.sum(P*TME[i][1][0]))**2
+            sumOfME_2 = (na.sum(P*TME[i][0][1]))**2+(na.sum(P*TME[i][1][1]))**2
+            sumOfME_3 = (na.sum(P*TME[i][0][2]))**2+(na.sum(P*TME[i][1][2]))**2
+            M.append(sumOfME)
+            M1.append(sumOfME_1)
+            M2.append(sumOfME_2)
+            M3.append(sumOfME_3)
+            if len(st.states[i][0].split('_')) == 1:
+                st1 = int(st.states[i][0])
+            elif len(st.states[i][0].split('_')) == 2:
+                st1 = int(st.states[i][0].split('_')[0])
+            if len(st.states[i][1].split('_')) == 1:
+                st2 = int(st.states[i][1])
+            elif len(st.states[i][1].split('_')) == 2:
+                st1 = int(st.states[i][1].split('_')[0])
+            Eab = abs(self.retrieveWFEnergy(st1, wft1)
+                      - self.retrieveWFEnergy(st2, wft2))
+            F.append(sp.true_divide(sumOfME, Eab))
+            F1.append(sp.true_divide(sumOfME_1, Eab))
+            F2.append(sp.true_divide(sumOfME_2, Eab))
+            F3.append(sp.true_divide(sumOfME_3, Eab))
+            Mel.append([M[i]*stWeight[i] / WeightNorm])
+            Mel1.append([M1[i]*stWeight[i]/WeightNorm])
+            Mel2.append([M2[i]*stWeight[i]/WeightNorm])
+            Mel3.append([M3[i]*stWeight[i]/WeightNorm])
+            Fel.append([F[i]*stWeight[i]/WeightNorm])
+            Fel1.append([F1[i]*stWeight[i]/WeightNorm])
+            Fel2.append([F2[i]*stWeight[i]/WeightNorm])
+            Fel3.append([F3[i]*stWeight[i]/WeightNorm])
+        matrixEl.append(na.sum(Mel))
+        matrixEl1.append(na.sum(Mel1))
+        matrixEl2.append(na.sum(Mel2))
+        matrixEl3.append(na.sum(Mel3))
+        oscSt.append(na.sum(Fel))
+        oscSt1.append(na.sum(Fel1))
+        oscSt2.append(na.sum(Fel2))
+        oscSt3.append(na.sum(Fel3))
+    polDep = [matrixEl, oscSt, matrixEl1, oscSt1,
+              matrixEl2, oscSt2, matrixEl3, oscSt3]
     print '\nPolarization calculations finished\n'
-
     return polDep
-
-
-
-
-
-
 
