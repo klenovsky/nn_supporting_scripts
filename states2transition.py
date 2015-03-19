@@ -2,7 +2,7 @@
 # wftype = [ 'x3' , 'kp6' ]
 
 # FOR III-V
-wftype = [ 'kp8' , 'kp8' ]
+wftype = ['kp8', 'kp8']
 
 
 # states typically expected in the form: (hole state),(electron state),(amount)
