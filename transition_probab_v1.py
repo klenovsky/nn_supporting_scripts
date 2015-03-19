@@ -253,6 +253,9 @@ class trans_probab():
     data /= norm
     return data
 
+  def cache_quantities(self):
+    pass
+  
   # pocita transition matrix element (TME)
   def makeTME (self, kp8_1, kp8_2, pol):
     # print 'makeTME STARTED'
@@ -383,16 +386,10 @@ class trans_probab():
          #Nacteni obou wf:
          #state 1
          self.readSizesFromFld(st1 , wft1)
-         nx1=self.nx
-         ny1=self.ny
-         nz1=self.nz
          self.generateWFNames (st1 , wft1)
          alternate_kp8_1 = self.make_alternate_WFkp8state(wft1, sbSpin=spin)
          #state 2
          self.readSizesFromFld(st2 , wft2)
-         nx2=self.nx
-         ny2=self.ny
-         nz2=self.nz
          self.generateWFNames (st2 , wft2)
          alternate_kp8_2 = self.make_alternate_WFkp8state(wft2)
          wfStates.append([alternate_kp8_1 , alternate_kp8_2])
@@ -417,16 +414,10 @@ class trans_probab():
          #Nacteni obou wf:
          #state 1
          self.readSizesFromFld( st1 , wft1 )
-         nx1=self.nx
-         ny1=self.ny
-         nz1=self.nz
          self.generateWFNames ( st1 , wft1 )
          kp8_1 = self.makeWFkp8state( wft1 , sbSpin=spin )
          #state 2
          self.readSizesFromFld( st2 , wft2 )
-         nx2=self.nx
-         ny2=self.ny
-         nz2=self.nz
          self.generateWFNames ( st2 , wft2 )
          kp8_2 = self.makeWFkp8state( wft2 )
          wfStates.append([kp8_1, kp8_2])
@@ -441,10 +432,8 @@ class trans_probab():
 
     wft1 = st.wftype[0]
     wft2 = st.wftype[1]
-    kp8wf, stWeight = self.load_alternate_WFs(wft1, wft2)    
+    alternate_kp8wf, alternate_stWeight = self.load_alternate_WFs(wft1, wft2)    
     kp8wf, stWeight = self.loadWFs(wft1, wft2)
-    print "len", len(kp8wf)
-    print "len2", len(kp8wf[0][0])
     WeightNorm = na.sum(stWeight)
 
     # Eab=abs(self.retrieveWFEnergy( st1 , wft1 )
@@ -473,6 +462,7 @@ class trans_probab():
     oscSt1 = []
     oscSt2 = []
     oscSt3 = []
+    print "Polnorm", len(polNorm)
     for iter in polNorm:
         TME = []
         M = []
