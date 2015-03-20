@@ -430,14 +430,12 @@ class trans_probab():
   def get_alternate_WFs(self, transition , wft1 , wft2):
         state_1 = transition[0]
         state_2 = transition[1]
-        out = self.intermediate_vectors.get((state_1, state_2),
-                                            self.load_alternate_WFs(state_1, state_2, wft1, wft2))
-        return out
+        if (state_1, state_2) not in self.intermediate_vectors.keys():
+            self.intermediate_vectors[(state_1, state_2)] =\
+              self.load_alternate_WFs(state_1, state_2, wft1, wft2)
+        return self.intermediate_vectors[(state_1, state_2)]
                                             
   def load_alternate_WFs(self, state_1, state_2, wft1 , wft2):
-        state_1 = transition[0]
-        state_2 = transition[1]
-        if []
         print 'Handling transition', state_1, state_2
         if len(state_1.split('_')) == 1:
             st1 = int(state_1)
