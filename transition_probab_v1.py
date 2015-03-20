@@ -21,6 +21,7 @@ class trans_probab():
   def __init__(self , prefix='' , Ep=21.5 , kind='kp8' ):
     print 'transition_probab initialized'
     self.prefix=prefix
+    self.intermediate_vectors = {}
 
   #Funkce pro nacitani dat z nextnano souboru 'filename', stejne jako v strain_from_nextnano_to_csi.py
   def read_data_from_NN( self , filename):
@@ -295,8 +296,6 @@ class trans_probab():
         pass
 
   def adapt_shape(self, in_array):
-        print in_array.shape
-        print in_array[0].real.shape
         real_part = [elem.real.reshape((self.nx, self.ny, self.nz), order='FORTRAN') for elem in in_array.transpose()]
         imag_part = [elem.imag.reshape((self.nx, self.ny, self.nz), order='FORTRAN') for elem in in_array.transpose()]
         return [real_part, imag_part]
@@ -420,7 +419,7 @@ class trans_probab():
   #Transform TME from {s,p_x,p_y,p_z} basis to {s,hh,lh,so} basis     UNFINISHED   !!!!!!!!!!!!!!!!!!!!!!!!! 
   def basisTrans ( real , imag ):
     hh_re=1/na.sqrt(2.0)*real[1]
-    hh_im=1/na.sqrt(2.0)*imag[2] 
+    hh_im=1/na.sqrt(2.0)*imag[2]
 
   def get_transition_weights(self):
         out = na.array([])
@@ -428,9 +427,17 @@ class trans_probab():
             out = na.append(out, float(transition[2]))
         return out
 
-  def load_alternate_WFs(self, transition , wft1 , wft2):
+  def get_alternate_WFs(self, transition , wft1 , wft2):
         state_1 = transition[0]
         state_2 = transition[1]
+        out = self.intermediate_vectors.get((state_1, state_2),
+                                            self.load_alternate_WFs(state_1, state_2, wft1, wft2))
+        return out
+                                            
+  def load_alternate_WFs(self, state_1, state_2, wft1 , wft2):
+        state_1 = transition[0]
+        state_2 = transition[1]
+        if []
         print 'Handling transition', state_1, state_2
         if len(state_1.split('_')) == 1:
             st1 = int(state_1)
@@ -552,7 +559,7 @@ class trans_probab():
             if basisType == 'sppp':
                 if local_mode == 'alternate':
                     intermediate_vector =\
-                      self.load_alternate_WFs(st.states[i], wft1, wft2)
+                      self.get_alternate_WFs(st.states[i], wft1, wft2)
                     # TODO: check correct account of direction of scalar product
                     # with conjugation, compared to sign of imaginary part in
                     # classical implementation.
@@ -561,7 +568,6 @@ class trans_probab():
                     TME.append(to_append)
                 else:
                     TME.append(self.makeTME(kp8wf[i][0], kp8wf[i][1], iter))
-                    print TME[i][0][0].shape
             elif basisType == 'shls':
                     TME.append(self.makeTMEhls(kp8wf[i][0], kp8wf[i][1], iter))
             MEreal = TME[i][0][0] + TME[i][0][1] + TME[i][0][2]
