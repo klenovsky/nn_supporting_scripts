@@ -291,7 +291,15 @@ class trans_probab():
     return intermediate_vector
 
   def cache_quantities(self):
-    pass
+        """Left as an exercise for the reader"""
+        pass
+
+  def adapt_shape(self, in_array):
+        print in_array.shape
+        print in_array[0].real.shape
+        real_part = [elem.real.reshape((self.nx, self.ny, self.nz), order='FORTRAN') for elem in in_array.transpose()]
+        imag_part = [elem.imag.reshape((self.nx, self.ny, self.nz), order='FORTRAN') for elem in in_array.transpose()]
+        return [real_part, imag_part]
 
   def makeTME (self, kp8_1, kp8_2, pol):
     # print 'makeTME STARTED'
@@ -364,7 +372,7 @@ class trans_probab():
     # s down, z, y, z down
     # real first 8, imag second 8
     out = pol * intermediate_vector
-    return [out.real, out.imag]
+    return out
   
   #Transition matrix element in basis of s,hh,lh,so
   def makeTMEhls (self, kp8_1, kp8_2, pol):
@@ -417,7 +425,7 @@ class trans_probab():
   def get_transition_weights(self):
         out = na.array([])
         for transition in st.states:
-            na.append(out, float(transition[2]))
+            out = na.append(out, float(transition[2]))
         return out
 
   def load_alternate_WFs(self, transition , wft1 , wft2):
@@ -481,8 +489,9 @@ class trans_probab():
     print '\nMaking transition matrix elements\n'
     wft1 = st.wftype[0]
     wft2 = st.wftype[1]
-    stWeights = self.get_transition_weights()
-    WeightNorm = na.sum(stWeights)    
+    stWeight = self.get_transition_weights()
+    print "stWeight", stWeight
+    WeightNorm = na.sum(stWeight)
     kp8wf = None
     if local_mode == 'alternate':
       pass
@@ -547,9 +556,12 @@ class trans_probab():
                     # TODO: check correct account of direction of scalar product
                     # with conjugation, compared to sign of imaginary part in
                     # classical implementation.
-                    TME.append(self.make_alternate_TME(iter, intermediate_vector))
+                    to_append = self.make_alternate_TME(iter, intermediate_vector)
+                    to_append = self.adapt_shape(to_append)
+                    TME.append(to_append)
                 else:
                     TME.append(self.makeTME(kp8wf[i][0], kp8wf[i][1], iter))
+                    print TME[i][0][0].shape
             elif basisType == 'shls':
                     TME.append(self.makeTMEhls(kp8wf[i][0], kp8wf[i][1], iter))
             MEreal = TME[i][0][0] + TME[i][0][1] + TME[i][0][2]
