@@ -21,8 +21,7 @@ class trans_probab():
   def __init__(self , prefix='' , Ep=21.5 , kind='kp8' ):
     print 'transition_probab initialized'
     self.prefix=prefix
-      
-    
+
   #Funkce pro nacitani dat z nextnano souboru 'filename', stejne jako v strain_from_nextnano_to_csi.py
   def read_data_from_NN( self , filename):
     buffer=na.fromfile( filename,  sep='\n' )
@@ -39,7 +38,7 @@ class trans_probab():
 
     #self.readSizesFromFld( 1 , st.wftype[0] )
     return [ nx , ny , nz , n ]
-    
+
   #Funkce pro nacteni energie stavu s cislem 'state', stejne jako v strain_from_nextnano_to_csi.py
   def retrieveWFEnergy( self, state, wftype='kp8' ):
     f=open(os.path.join(self.prefix, 'wf_spectrum_dot_'+wftype+'.dat'), 'r')
@@ -47,7 +46,7 @@ class trans_probab():
     return float( lines[state].split()[1] )
 
   #Funkce pro nacteni rozmeru 8kp wf s poradovym cislem 'state', stejne jako v strain_from_nextnano_to_csi.py
-  def readSizesFromFld( self, state , wftype ):
+  def readSizesFromFld(self, state, wftype):
     #print state
     fldname= os.path.join(self.prefix, 'wf_amplitude_real_dot_'+wftype+'_1_0000_00%02i.fld'%(state))
     #print fldname
@@ -67,7 +66,7 @@ class trans_probab():
     alloyname = os.path.join(self.prefix, 'alloy_composition.dat')
     fldname=os.path.join(self.prefix, 'alloy_composition.fld')
     coordname=os.path.join(self.prefix, 'alloy_composition.coord')
-    dim=self.readDimensions( fldname )
+    dim=self.readDimensions(fldname)
     nx=dim[0]
     ny=dim[1]
     nz=dim[2]
@@ -75,7 +74,8 @@ class trans_probab():
     #print nx,ny,nz,nx*ny*nz
     #print self.nx,self.ny,self.nz,self.nx*self.ny*self.nz
     data=self.read_data_from_NN( alloyname )[0:n]
-    coord=self.read_data_from_NN( coordname )[0:n]    
+    coord=self.read_data_from_NN( coordname )[0:n]
+
     coordFit=self.read_data_from_NN( coordNameToFit )[0:self.n]
     #Inline funkce, ktera provadi cele pretypovani, mezi QD a SRL rozlisuje typickou limitou koncentrace slitiny (<0.35 SRL, >0.35 QD)
     #PREFFERED FOR III-V
@@ -131,6 +131,16 @@ class trans_probab():
     print 'Ep GENERATED'
     return Ep
 
+  # This is a quick and dirty fix. It should not bet here.
+  # Among the many reasons which show it is that any time
+  # a method only depends on self, it should not be a method :)
+  # (but a function)
+  def get_coord_for_Ep(self):
+        wftype = 'kp8'
+        hardcoded_suffix = self.REAL_ROOT + wftype + '_1_0000_0004.coord'
+        out = os.path.join(self.prefix, hardcoded_suffix)
+        return out
+
   def get_wf_names(self, state, wftype='kp8'):
         real_suffixes = [self.REAL_ROOT + wftype + '_' + str(i) +
                          '_0000_00%02i.dat'%(state) for i in xrange(1,9)]
@@ -146,8 +156,8 @@ class trans_probab():
     #real=[ 'wf_amplitude_real_dot_'+wftype+'_'+str(i)+'_'+'_'.join(str(state))+'.dat' for i in xrange(1,9)]
     
     if wftype == 'kp8':
-         real=[ os.path.join(self.prefix, 'wf_amplitude_real_dot_'+wftype+'_'+str(i)+'_0000_00%02i.dat'%(state)) for i in xrange(1,9)]
-         imag=[os.path.join(self.prefix, 'wf_amplitude_imag_dot_'+wftype+'_'+str(i)+'_0000_00%02i.dat'%(state)) for i in xrange(1,9)]
+         real = [ os.path.join(self.prefix, 'wf_amplitude_real_dot_'+wftype+'_'+str(i)+'_0000_00%02i.dat'%(state)) for i in xrange(1,9)]
+         imag = [os.path.join(self.prefix, 'wf_amplitude_imag_dot_'+wftype+'_'+str(i)+'_0000_00%02i.dat'%(state)) for i in xrange(1,9)]
 
          #real=[ self.path+'wf_amplitude_real_dot_kp8_'+str(i)+'_'+'_'.join(parts[6:])+'.dat' for i in xrange(1,9)]
          #imag=[ self.path+'wf_amplitude_imag_dot_kp8_'+str(i)+'_'+'_'.join(parts[6:])+'.dat' for i in xrange(1,9)]
@@ -410,14 +420,14 @@ class trans_probab():
             na.append(out, float(transition[2]))
         return out
 
-  def load_alternate_WFs(self , wft1 , wft2, transition):
+  def load_alternate_WFs(self, transition , wft1 , wft2):
         state_1 = transition[0]
         state_2 = transition[1]
         print 'Handling transition', state_1, state_2
         if len(state_1.split('_')) == 1:
-              st1 = int(state_1)
+            st1 = int(state_1)
         elif len(state_1.split('_')) == 2:
-              st1 = int(state_1.split('_')[0])
+            st1 = int(state_1.split('_')[0])
         st2 = int(state_2)
         # Nacteni obou wf:
         # state 1
@@ -465,6 +475,9 @@ class trans_probab():
   # different types of basis: basisType='sppp' or basisType='shls'
   def makePolDep(self, pol=[[1, 1, 0]], basisType='sppp'):
     local_mode = 'alternate'
+    # HORRIBLE FUDGE TO GET PROPER INITIALIZATION OF THE CLASS
+    # KIDS, DO NOT DO THIS AT HOME
+    self.readSizesFromFld(1 , 'kp8')
     print '\nMaking transition matrix elements\n'
     wft1 = st.wftype[0]
     wft2 = st.wftype[1]
@@ -489,7 +502,9 @@ class trans_probab():
             st2 = int(st.states[0][1])
     elif len(st.states[0][1].split('_')) == 2:
             st1 = int(st.states[0][1].split('_')[0])
-    coordForEp = self.allDatnames[0][:-4] + '.coord'
+    # THIS IS NOT NICE!!!!! hardcoded 0 to retrieve some filename
+    # = NOPE
+    coordForEp = self.get_coord_for_Ep()
     print "coordForEp", coordForEp
     Ep = self.makeEp(coordForEp, st1, st2, wft1, wft2)
     # Prepocet Ep na P
