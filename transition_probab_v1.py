@@ -1,26 +1,25 @@
-import sys,os,states2transition as st
+import os
+import states2transition as st
 import numpy as na
 import scipy as sp
-import bisect as bi
-from intergrid import Intergrid 
-from scipy import ndimage
-#import matplotlib.pyplot as plt
-#import matplotlib.image as mpimg
+from intergrid import Intergrid
+import scipy.constants as constants
 
-hbar=1.054571726 #*10**(-34)
-e=1.602176565 #*10**(-19)
 
-print na.__version__
+hbar = constants.hbar * 1.e34
+e = constants.e * 1.e19
+
+print "numpy version:", na.__version__
+
 
 class trans_probab():
 
   REAL_ROOT = 'wf_amplitude_real_dot_'
   IMAG_ROOT = 'wf_amplitude_imag_dot_'
 
-      
-  def __init__(self , prefix='' , Ep=21.5 , kind='kp8' ):
+  def __init__(self, prefix='', Ep=21.5, kind='kp8'):
     print 'transition_probab initialized'
-    self.prefix=prefix
+    self.prefix = prefix
     self.intermediate_vectors = {}
 
   #Funkce pro nacitani dat z nextnano souboru 'filename', stejne jako v strain_from_nextnano_to_csi.py
