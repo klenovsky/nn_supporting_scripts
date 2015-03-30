@@ -1,13 +1,10 @@
 import numpy as na
-#from scipy.io.numpyio import fread
-#import numpy as na
-import scipy as sp
-import sys, os
+import sys
+import os
 
 #if __name__ == '__main__':
 class dipole ():
    def __init__( self , prefix='', no_e=1, no_h=2, Type='nn++'):  
-       print 'dipole_moment initialized'      
        #state_no_h=int(sys.argv[1])
        #state_no_e=int(sys.argv[2])
        self.Type=Type
@@ -16,7 +13,7 @@ class dipole ():
        self.no_e=no_e
        #no_h_s=str(no_h)
        #no_e_s=str(no_e)
-        
+       print 'dipole_moment initialized'
 
    def read_data_from_NN( self , filename ):
        if not os.path.isfile(filename):
@@ -27,7 +24,7 @@ class dipole ():
 
    def generateWFNames( self , state , particle ):
      if self.Type=='nn++':
-       return self.prefix+'wf_probability_dot_kp8_0000_00%02i'%(state)
+       return os.path.join(self.prefix, 'wf_probability_dot_kp8_0000_00%02i'%(state))
      elif self.Type=='nn3_1x6':
        if particle=='e':
           return self.prefix+'\\Schroedinger_1band\\3Dcb001_qc001_sg001_deg001_dir_psi_squared_ev0%02i'%(state)
@@ -41,6 +38,7 @@ class dipole ():
 
 
    def read_dimensions (self , filename ):
+       print "filename: ", filename
        fld_name=filename[:-4]+'.fld'
        f_fld=open(fld_name, 'r')
        lines=[ f_fld.readline() for i in xrange(8) ]

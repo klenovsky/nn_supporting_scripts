@@ -1,14 +1,13 @@
 """This is the main script
 """
-
 import sys
+import os
 import numpy as na
 import scipy as sp
 import matplotlib.pyplot as plt
 import directory_names as dn
 import dipole_moment as dp
 import energy_extract as en
-import states2transition as st
 import elastic_strain as stn
 import avs2vtkr_conv as may
 import energy_extract_nn3 as en3
@@ -16,6 +15,11 @@ import make2Dslice as sl
 import images2gif as gif
 import cProfile
 import pstats
+import StringIO
+import getpass
+if getpass.getuser() == 'dominique':
+    if 'Scripts' not in 'sys.path':
+        sys.path.append(os.path.relpath('.'))
 
 # pylint: disable=C0303
 # pylint: disable=R0912
@@ -29,11 +33,14 @@ def main():
          [angle end (deg) ] [ no of angles ]
     """
     print 'this is make_dep.py\n\n'
+    # Why is this import now working
+    # from the top level?
+    import states2transition as st
     # DEFINING COMMON STRINGS
-    prefix = dn.path
-    suffix = '\\output\\'
+    prefix = dn.prefix
+    suffix = 'output'
     # NEEDED TO DISTINGUISH BETWEEN CALCULATIONS
-    tag = prefix.split('//')[-1].split('_')[-1][:-1] + '_'
+    tag = prefix.split(os.sep)[-1].split('_')[-1] + '_'
     xval = []
     yval = []
     yval2 = []
@@ -53,7 +60,7 @@ def main():
         f_moment.write('#Dipole moment between states %i %i\n' % (st_h, st_e))
         f_moment.write('#x y z\n')
         for local_file in dn.dir_n:
-            filename = prefix+local_file+suffix
+            filename = os.path.join(prefix, local_file, suffix)
             dip_mom = dp.dipole(prefix=filename, no_e=st_e, no_h=st_h)
             moment = dip_mom.calc_e_h_dipole()
             print local_file.split('_')[-1], moment
@@ -72,7 +79,7 @@ def main():
 
             dp_name = (prefix + tag + 'dipole_moment_' + str(st_e) + '_'
                        + str(st_h) + '.txt')
-            print dp_name
+            print "dp_name: ", dp_name
             f_moment = open(dp_name, 'w')
             f_moment.write('#Dipole moment between states %i %i\n'
                            % (st_h, st_e))
@@ -141,7 +148,7 @@ def main():
         if len(sys.argv) > 1:
                 if sys.argv[1] == '-e3':
                     print 'calculating transition energy for nn3'
-                    e_name = prefix+tag+'_single_particle_energy.txt'
+                    e_name = prefix + tag + '_single_particle_energy.txt'
                     f_energy = open(e_name, 'w')
                     f_energy.write('#Lowest transition energy'
                                    + 'between single particle states \n')
@@ -177,9 +184,15 @@ def main():
                         if int(int(data[i][0]) == states[0]):
                             print data[i][1:]
                             print file.split('_')[-1]
-                            out.write('%f %f %f %f %f %f %f %f %f %f %f %f %f\n'%(float(file.split('_')[-1]),\
-                                                                                  data[i][1]+data[i][2],data[i][3]+data[i][6],data[i][4]+data[i][5],data[i][7]+data[i][8],\
-                                                                                  data[i][1],data[i][2],data[i][3],data[i][6],data[i][4],data[i][5],data[i][7],data[i][8]))
+                            format_string = '%f '*13 + '\n'
+                            out.write(format_string %
+                                      (float(file.split('_')[-1]),
+                                       data[i][1] + data[i][2], data[i][3] +
+                                       data[i][6], data[i][4] + data[i][5],
+                                       data[i][7] + data[i][8],
+                                       data[i][1], data[i][2], data[i][3],
+                                       data[i][6], data[i][4], data[i][5],
+                                       data[i][7], data[i][8]))
                 out.close()
 
         # usage: make_dep.py -st
@@ -216,17 +229,25 @@ def main():
 
         if len(sys.argv) > 1:
             if sys.argv[1] == '-oNew':
+                headers = {}
+                headers['sppp'] = ('#Angle TME OscStr TME(sp_x)'
+                                   + 'OscStr(sp_x) TME(sp_y) OscStr(sp_y)'
+                                   + ' TME(sp_z) OscStr(sp_z)\n')
+                headers['shls'] = ('#Angle TME OscStr TME(shh) OscStr(shh)'
+                                   + 'TME(slh) OscStr(slh) TME(sso)'
+                                   + 'OscStr(sso)\n')
                 basis = 'sppp'  # basis Bloch waves s,px,py,pz
                 extremAngPos = []
                 for directory in dn.dir_n:
+                    print 'DIR: ', directory
                     ax = plt.subplot(121, polar=True)
-                    filename = prefix+directory+suffix
-                    print 'DIR', directory
+                    filename = os.path.join(prefix, directory, suffix)
                     last = float(directory.split('_')[-1])
+                    print "last", last
                     start = float(sys.argv[2])
                     end = float(sys.argv[3])
                     step = int(sys.argv[4])
-                    print "step: ", step, type(step)
+                    print "step: ", step  # type(step)
                     angles = na.linspace(start, end, num=step)
                     out = []
                     tempName = ('PolDepTME_' + str(st.states[0][0])
@@ -234,14 +255,7 @@ def main():
                                 + str(directory.split('_')[-2:]))
                     f = open(prefix + tag + tempName + '_' +
                              basis + '.txt', 'w')
-                    if basis == 'sppp':
-                        f.write('#Angle TME OscStr TME(sp_x)'
-                                + 'OscStr(sp_x) TME(sp_y) OscStr(sp_y)'
-                                + ' TME(sp_z) OscStr(sp_z)\n')
-                    elif basis == 'shls':
-                        f.write('#Angle TME OscStr TME(shh) OscStr(shh)'
-                                + 'TME(slh) OscStr(slh) TME(sso)'
-                                + 'OscStr(sso)\n')
+                    f.write(headers[basis])
                     polarization = []
 
             # ###### IMPORTANT, CHOOSE ORIENTATION OF 0 DEG ##########
@@ -258,8 +272,9 @@ def main():
                 # polarization.append([ na.cos((angles[i]+45)/180.0*sp.pi) ,
                 # na.sin((angles[i]+45)/180.0*sp.pi) , 0.0 ])
                 # pro orientaci 0 analyzatoru podel [1-10]
-                polarization.append([na.cos((angles[i]-45)/180.0*sp.pi),
-                                     na.sin((angles[i]-45)/180.0*sp.pi), 0.0])
+                polarization.append([na.cos((angles[i] - 45) / 180.0 * sp.pi),
+                                     na.sin((angles[i] - 45) / 180.0 * sp.pi),
+                                     0.0])
                 # pro polarizaci podel [001]
                 # polarization.append([ 0.0 , na.cos((angles[i]+90)/180.0
                 # *sp.pi),
@@ -268,18 +283,29 @@ def main():
                 # polarization.append([ na.cos((angles[i]+45)/180.0*sp.pi),
                 # na.sin((angles[i]+45)/180.0*sp.pi)*na.cos((angle_z)/180.0
                 # *sp.pi) , na.sin((angle_z)/180.0*sp.pi) ])
-            cProfile_params = ('data=trans.makePolDep(polarization,'
-                               + 'basisType=basis)')
-            cProfile.run(cProfile_params, 'fit_run_info.txt')
-            print '\nTime of fit run:\n\n'
-            tim = pstats.Stats('fit_run_info.txt')
-            tim.strip_dirs().sort_stats('time').print_stats(5)
+            import transition_probab_v1 as trans
+            my_trans = trans.trans_probab(prefix=filename)
+            pr = cProfile.Profile()
+            pr.enable()
+            data = my_trans.makePolDep(polarization, basisType=basis)
+            pr.disable()
+            s = StringIO.StringIO()
+            sortby = 'cumulative'
+            ps = pstats.Stats(pr, stream=s).sort_stats(sortby)
+            ps.print_stats()
+            ps.dump_stats("stat_file.txt")
+            print s.getvalue()
             for i in range(len(angles)):
                 out.append([angles[i],
                             data[0][i], data[1][i], data[2][i], data[3][i],
                             data[4][i], data[5][i], data[6][i], data[7][i]])
             for i in range(len(angles)):
-                f.write('%f %f %f %f %f %f %f %f %f\n' % (out[i][0],out[i][1],out[i][2],out[i][3],out[i][4],out[i][5],out[i][6],out[i][7],out[i][8]))
+                f.write('%f %f %f %f %f %f %f %f %f\n' % (out[i][0],
+                                                          out[i][1], out[i][2],
+                                                          out[i][3], out[i][4],
+                                                          out[i][5], out[i][6],
+                                                          out[i][7],
+                                                          out[i][8]))
             posMax = data[1].index(max(data[1]))
             posMin = data[1].index(min(data[1]))
             valMax = max(data[1])
@@ -289,17 +315,16 @@ def main():
                    angles[int(posMax)], angles[int(posMin)],
                    'value at maximum, minimum: ',
                    valMax, valMin, 'polDegree: ', polDegree, '\n\n')
-            if angles[int(posMax)] < 0:
-                extremAngPos.append([float(last), angles[int(posMax)],
-                                     angles[int(posMin)], valMin / valMax,
-                                     valMax, valMin, polDegree])
+            if angles[int(posMax)] > 0:
+                ratio = valMax / valMin
             else:
-                extremAngPos.append([float(last), angles[int(posMax)],
-                                     angles[int(posMin)], valMax / valMin,
-                                     valMax, valMin, polDegree])
+                ratio = valMin / valMax
+            extremAngPos.append([float(last), angles[int(posMax)],
+                                 angles[int(posMin)], ratio,
+                                 valMax, valMin, polDegree])
             f.close()
-            ax.plot(angles*na.pi/180.0, data[1]-min(data[1]), 'o',
-                    label=last)
+            ax.plot(angles * na.pi / 180.0, data[1] - min(data[1]),
+                    'o', label=last)
             ax.grid(True)
         plt.legend(bbox_to_anchor=(1.05, 1.0), loc=2, borderaxespad=1.)
         plt.savefig(prefix + tag + 'angOSC_' + st.states[0][0]
@@ -346,8 +371,8 @@ def main():
                     if buf[1][j] == states[0] and buf[2][j] == states[1]:
                         print buf[3][j]
                         out.write(' %f' % (float(buf[3][j])))
-            out.write('\n')
-        out.close()
+                out.write('\n')
+                out.close()
 
         # convert to vtk file for 3D data imaging by mayavi
         if len(sys.argv) > 1:
